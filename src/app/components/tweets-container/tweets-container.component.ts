@@ -1,15 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { take } from 'rxjs/operators';
-import { API_ENDPOINT } from 'src/app/data/api.data';
-import { TweetInfo } from 'src/app/models/tweets.model';
+import { API_ENDPOINT } from '../../data/api.data';
+import { TweetInfo } from '../../models/tweets.model';
 import { Store } from '@ngrx/store';
-import { AppState } from 'src/app/app.state';
-import { UpdateTweetsListAction } from 'src/app/reducers/tweets/actions/update-tweets-list.action';
+import { AppState } from '../../app.state';
+import { UpdateTweetsListAction } from '../../reducers/tweets/actions/update-tweets-list.action';
 import { interval, Observable, Subscription } from 'rxjs';
-import { UPDATE_FEED_INTERVAL_PERIOD } from 'src/app/data/settings.data';
-import { RequestParamsService } from 'src/app/services/request-params.service';
-import { ConsoleLoggerService } from 'src/app/services/console-logger.service';
+import { UPDATE_FEED_INTERVAL_PERIOD } from '../../data/settings.data';
+import { RequestParamsService } from '../../services/request-params.service';
+import { ConsoleLoggerService } from '../../services/console-logger.service';
 
 @Component({
 	selector: 'app-tweets-container',

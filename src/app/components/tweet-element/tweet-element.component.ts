@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
-import { TweetInfo } from 'src/app/models/tweets.model';
+import { TweetInfo } from '../../models/tweets.model';
 
 @Component({
 	selector: 'app-tweet-element',
