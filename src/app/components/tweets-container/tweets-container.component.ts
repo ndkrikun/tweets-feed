@@ -44,7 +44,7 @@ export class TweetsContainerComponent implements OnInit, OnDestroy {
 	 */
 	public ngOnInit(): void {
 		this.updateTweets();
-		// this.setUpdateTweetsInterval();
+		this.setUpdateTweetsInterval();
 	}
 
 	/**
