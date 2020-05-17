@@ -43,20 +43,14 @@ export class TweetsContainerComponent implements OnInit, OnDestroy {
 	}
 
 	private fetchTweets(isInitialRequest: boolean): void {
-		try {
-			this.tweets$.pipe(take(1)).subscribe(list => {
-				const requestParams = this.requestParams.get(isInitialRequest, list);
+		this.tweets$.pipe(take(1)).subscribe(list => {
+			const requestParams = this.requestParams.get(isInitialRequest, list);
 
-				this.http.get<TweetInfo[]>(endpoint, { params: requestParams}).pipe(take(1)).subscribe(
-					payload => this.store.dispatch(new UpdateTweetsListAction(payload)),
-					(error: HttpErrorResponse) => {
-						throw new Error(this.consoleLogger.getRequestErrorMessage(error));
-					}
-				);
-			});
-		} catch (error) {
-			this.consoleLogger.logError(error);
-		}
+			this.http.get<TweetInfo[]>(endpoint, { params: requestParams}).pipe(take(1)).subscribe(
+				payload => this.store.dispatch(new UpdateTweetsListAction(payload)),
+				(error: HttpErrorResponse) => this.consoleLogger.logRequestError(error)
+			);
+		});
 	}
 
 	private setUpdateTweetsTimer(): void {
