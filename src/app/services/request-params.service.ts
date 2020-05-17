@@ -7,8 +7,13 @@ import { AvailableProps, QueryParams } from '../models/api.model';
 	providedIn: 'root'
 })
 export class RequestParamsService {
-	public get(initialRequest: boolean, loadedTweets: TweetInfo[]): QueryParams {
-		if (initialRequest || loadedTweets.length === 0) {
+	/**
+	 * Returns required params for request
+	 */
+	public get(loadedTweets: TweetInfo[]): QueryParams {
+		const isFirstRequest = loadedTweets.length === 0;
+
+		if (isFirstRequest) {
 			return {
 				[AvailableProps.COUNT]: String(INITIAL_TWEETS_QUANTITY)
 			};
@@ -19,6 +24,9 @@ export class RequestParamsService {
 		};
 	}
 
+	/**
+	 * Returns newest tweet
+	 */
 	public getNewestTweet(list: TweetInfo[]): TweetInfo {
 		return list.sort((a, b) => b.timeStamp - a.timeStamp)[0];
 	}

@@ -3,7 +3,9 @@ import { TweetsActionTypes } from '../tweets.action-types';
 import { TweetsState } from '../tweets.state';
 import { TweetInfo } from '../../../models/tweets.model';
 
-
+/**
+ * Updates tweets list state with new elements
+ */
 export class UpdateTweetsListAction implements Action {
 
 	public readonly type = TweetsActionTypes.UPDATE_TWEETS_LIST;

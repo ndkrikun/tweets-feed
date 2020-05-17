@@ -2,6 +2,9 @@ export interface QueryParams {
 	[key: string]: (string | string[]);
 }
 
+/**
+ * Available parameters for API endpoint
+ */
 export enum AvailableProps {
 	COUNT = 'count',
 	AFTER_ID = 'afterId',

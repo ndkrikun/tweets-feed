@@ -5,10 +5,16 @@ import { HttpErrorResponse } from '@angular/common/http';
 	providedIn: 'root'
 })
 export class ConsoleLoggerService {
+	/**
+	 * Logs error message for http request error
+	 */
 	public logRequestError(error: HttpErrorResponse): void {
 		this.logError(`Request error (${ error.url }): ${ error.status } ${ error.statusText }`);
 	}
 
+	/**
+	 * Logs error
+	 */
 	private logError(error: string): void {
 		console.warn(error);
 	}

@@ -4,7 +4,9 @@ import { Pipe, PipeTransform } from '@angular/core';
 	name: 'publishedTime'
 })
 export class PublishedTimePipe implements PipeTransform {
-
+	/**
+	 * Converts timeStamp to readable published time format
+	 */
 	transform(timeStamp: number): string {
 		const date = new Date(timeStamp * 1000);
 

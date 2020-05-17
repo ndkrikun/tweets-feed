@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { take } from 'rxjs/operators';
-import { endpoint } from 'src/app/data/api.data';
+import { API_ENDPOINT } from 'src/app/data/api.data';
 import { TweetInfo } from 'src/app/models/tweets.model';
 import { Store } from '@ngrx/store';
 import { AppState } from 'src/app/app.state';
@@ -22,8 +22,14 @@ export class TweetsContainerComponent implements OnInit, OnDestroy {
 	 */
 	public readonly tweets$ = this.store.select(({ tweets: {list} }) => list);
 
-	private interval: Observable<number>;
+	/**
+	 * Interval for feed updating
+	 */
+	private updateTweetsInterval: Observable<number>;
 
+	/**
+	 * Storage for all rxjs subscriprions
+	 */
 	private subscriptions = new Array<Subscription>();
 
 	constructor(
@@ -33,30 +39,42 @@ export class TweetsContainerComponent implements OnInit, OnDestroy {
 		private readonly consoleLogger: ConsoleLoggerService,
 	) {}
 
+	/**
+	 * Component life cycle hook
+	 */
 	public ngOnInit(): void {
-		this.fetchTweets(true);
-		this.setUpdateTweetsTimer();
+		this.updateTweets();
+		this.setUpdateTweetsInterval();
 	}
 
+	/**
+	 * Component life cycle hook
+	 */
 	public ngOnDestroy(): void {
 		this.subscriptions.forEach(sub => sub.unsubscribe());
 	}
 
-	private fetchTweets(isInitialRequest: boolean): void {
-		this.tweets$.pipe(take(1)).subscribe(list => {
-			const requestParams = this.requestParams.get(isInitialRequest, list);
+	/**
+	 * Updates state with newest tweets
+	 */
+	private updateTweets(): void {
+		this.tweets$.pipe(take(1)).subscribe(currentList => {
+			const requestParams = this.requestParams.get(currentList);
 
-			this.http.get<TweetInfo[]>(endpoint, { params: requestParams}).pipe(take(1)).subscribe(
+			this.http.get<TweetInfo[]>(API_ENDPOINT, { params: requestParams}).pipe(take(1)).subscribe(
 				payload => this.store.dispatch(new UpdateTweetsListAction(payload)),
 				(error: HttpErrorResponse) => this.consoleLogger.logRequestError(error)
 			);
 		});
 	}
 
-	private setUpdateTweetsTimer(): void {
-		this.interval = interval(UPDATE_FEED_INTERVAL_PERIOD);
+	/**
+	 * Sets interval for updating tweets
+	 */
+	private setUpdateTweetsInterval(): void {
+		this.updateTweetsInterval = interval(UPDATE_FEED_INTERVAL_PERIOD);
 		this.subscriptions.push(
-			this.interval.subscribe(() => this.fetchTweets(false))
+			this.updateTweetsInterval.subscribe(() => this.updateTweets())
 		);
 	}
 

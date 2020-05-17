@@ -8,12 +8,18 @@ import { TweetInfo } from 'src/app/models/tweets.model';
 	styleUrls: ['./tweet-element.component.sass']
 })
 export class TweetElementComponent {
+	/**
+	 * Single tweet info
+	 */
 	@Input() tweetInfo: TweetInfo;
 
 	constructor(
 		private readonly sanitization: DomSanitizer
 	) {}
 
+	/**
+	 * Wraps url with style template and tests it with sanitization service
+	 */
 	public get backgroundImage(): SafeStyle {
 		return this.sanitization.bypassSecurityTrustStyle(`url('${this.tweetInfo.image}')`);
 	}
