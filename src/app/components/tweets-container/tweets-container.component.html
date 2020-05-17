@@ -1,0 +1,6 @@
+<div class="tweets-container">
+    <app-tweet-element
+        *ngFor="let tweet of (tweets$ | async)"
+        [tweetInfo]="tweet"
+    ></app-tweet-element>
+</div>
