@@ -1,7 +1,12 @@
 .tweet-element
 	position: relative;
 	min-height: 120px;
-	padding: 20px 0;
+	border: 1px solid black;
+	border-radius: 5px;
+	padding: 30px;
+	margin-bottom: 35px;
+	&:nth-last-of-type
+		margin-bottom: 0px;
 
 	&__avatar
 		position: absolute;
@@ -13,8 +18,10 @@
 		background-repeat: no-repeat;
 
 	&__info
+		font-size: 16px;
 		margin-left: 120px;
 		vertical-align: top;
+		color: #000000;
 
 		&-username
 			display: inline-block;
