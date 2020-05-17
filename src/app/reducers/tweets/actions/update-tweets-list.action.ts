@@ -15,7 +15,7 @@ export class UpdateTweetsListAction implements Action {
 	public reduce(this: void, state: TweetsState, action: UpdateTweetsListAction): TweetsState {
 		return {
 			...state,
-			list: action.payload,
+			list: action.payload.concat(state.list),
 		};
 	}
 }
