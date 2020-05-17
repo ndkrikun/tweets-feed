@@ -8,12 +8,14 @@ import { AppComponent } from './app.component';
 import { TweetsContainerComponent } from './components/tweets-container/tweets-container.component';
 import { TweetElementComponent } from './components/tweet-element/tweet-element.component';
 import { tweetsReducer } from './reducers/tweets/tweets.reducer';
+import { PublishedTimePipe } from './pipes/published-time.pipe';
 
 @NgModule({
 	declarations: [
 		AppComponent,
 		TweetsContainerComponent,
-		TweetElementComponent
+		TweetElementComponent,
+		PublishedTimePipe
 	],
 	imports: [
 		BrowserModule,

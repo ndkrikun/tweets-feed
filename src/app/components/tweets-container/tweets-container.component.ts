@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { take } from 'rxjs/operators';
 import { endpoint } from 'src/app/data/api.data';
 import { TweetInfo } from 'src/app/models/tweets.model';
@@ -7,8 +7,9 @@ import { Store } from '@ngrx/store';
 import { AppState } from 'src/app/app.state';
 import { UpdateTweetsListAction } from 'src/app/reducers/tweets/actions/update-tweets-list.action';
 import { interval, Observable, Subscription } from 'rxjs';
-import { INITIAL_TWEETS_QUANTITY, UPDATE_FEED_INTERVAL_PERIOD } from 'src/app/data/settings.data';
-import { QueryParams, AvailableProps } from 'src/app/models/api.model';
+import { UPDATE_FEED_INTERVAL_PERIOD } from 'src/app/data/settings.data';
+import { RequestParamsService } from 'src/app/services/request-params.service';
+import { ConsoleLoggerService } from 'src/app/services/console-logger.service';
 
 @Component({
 	selector: 'app-tweets-container',
@@ -27,8 +28,10 @@ export class TweetsContainerComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly store: Store<AppState>,
-		private readonly http: HttpClient
-	) { }
+		private readonly http: HttpClient,
+		private readonly requestParams: RequestParamsService,
+		private readonly consoleLogger: ConsoleLoggerService,
+	) {}
 
 	public ngOnInit(): void {
 		this.fetchTweets(true);
@@ -40,25 +43,20 @@ export class TweetsContainerComponent implements OnInit, OnDestroy {
 	}
 
 	private fetchTweets(isInitialRequest: boolean): void {
-		this.tweets$.pipe(take(1)).subscribe((list) => {
-			this.http.get<TweetInfo[]>(endpoint, { params: this.getRequestParams(isInitialRequest, list)}).pipe(
-				take(1)
-			).subscribe(payload => this.store.dispatch(new UpdateTweetsListAction(payload)));
-		});
-	}
+		try {
+			this.tweets$.pipe(take(1)).subscribe(list => {
+				const requestParams = this.requestParams.get(isInitialRequest, list);
 
-	private getRequestParams(initialRequest: boolean, loadedTweets: TweetInfo[]): QueryParams {
-		if (initialRequest || loadedTweets.length === 0) {
-			return {
-				[AvailableProps.COUNT]: String(INITIAL_TWEETS_QUANTITY)
-			};
+				this.http.get<TweetInfo[]>(endpoint, { params: requestParams}).pipe(take(1)).subscribe(
+					payload => this.store.dispatch(new UpdateTweetsListAction(payload)),
+					(error: HttpErrorResponse) => {
+						throw new Error(this.consoleLogger.getRequestErrorMessage(error));
+					}
+				);
+			});
+		} catch (error) {
+			this.consoleLogger.logError(error);
 		}
-
-		const newestTweet = loadedTweets.sort((a, b) => b.timeStamp - a.timeStamp)[0];
-
-		return {
-			[AvailableProps.AFTER_ID]: String(newestTweet.id)
-		};
 	}
 
 	private setUpdateTweetsTimer(): void {

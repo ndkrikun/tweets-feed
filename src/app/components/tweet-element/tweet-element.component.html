@@ -5,7 +5,7 @@
     ></div>
     <div class="tweet-element__info">
         <div class="tweet-element__info-username">{{ tweetInfo.username }}</div>
-        <div class="tweet-element__info-time">{{ publishedTime }}</div>
+        <div class="tweet-element__info-time">{{ tweetInfo.timeStamp | publishedTime }}</div>
         <div class="tweet-element__info-text">{{ tweetInfo.text }}</div>
     </div>
 </div>
