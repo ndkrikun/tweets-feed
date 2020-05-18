@@ -15,3 +15,7 @@ export enum AvailableProps {
 	TIME = 'time',
 	DIRECTION = 'direction',
 }
+
+export interface ApiResetResponse {
+	success: boolean;
+}
