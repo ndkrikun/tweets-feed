@@ -1,7 +1,7 @@
 /**
- * How many tweets should be loaded we app is started
+ * How many tweets should be loaded by default
  */
-export const INITIAL_TWEETS_QUANTITY = 10;
+export const DEFAULT_TWEETS_QUANTITY = 10;
 
 /**
  * Interval between each new feed update

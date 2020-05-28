@@ -1,5 +1,5 @@
-import { TweetInfo } from '../../models/tweets.model';
+import { TweetInfo } from "../../models/tweets.model";
 
 export interface TweetsState {
-	list: TweetInfo[];
+  list: TweetInfo[];
 }
