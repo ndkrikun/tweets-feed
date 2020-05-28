@@ -1,104 +1,155 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { take } from 'rxjs/operators';
-import { API_ENDPOINT, API_RESET_ENDPOINT } from '../../data/api.data';
-import { TweetInfo } from '../../models/tweets.model';
-import { Store } from '@ngrx/store';
-import { AppState } from '../../app.state';
-import { UpdateTweetsListAction } from '../../reducers/tweets/actions/update-tweets-list.action';
-import { interval, Observable, Subscription } from 'rxjs';
-import { UPDATE_FEED_INTERVAL_PERIOD, MAX_TWEET_ID } from '../../data/settings.data';
-import { RequestParamsService } from '../../services/request-params.service';
-import { ConsoleLoggerService } from '../../services/console-logger.service';
-import { ApiResetResponse } from '../../models/api.model';
+import { Component, OnInit, OnDestroy } from "@angular/core";
+import { HttpClient, HttpErrorResponse } from "@angular/common/http";
+import { take } from "rxjs/operators";
+import { API_ENDPOINT, API_RESET_ENDPOINT } from "../../data/api.data";
+import { TweetInfo } from "../../models/tweets.model";
+import { Store } from "@ngrx/store";
+import { AppState } from "../../app.state";
+import { UpdateTweetsListAction } from "../../reducers/tweets/actions/update-tweets-list.action";
+import { UpdateOldTweetsAction } from "../../reducers/tweets/actions/update-old-tweets.action";
+import { interval, Observable, Subscription } from "rxjs";
+import {
+  UPDATE_FEED_INTERVAL_PERIOD,
+  MAX_TWEET_ID
+} from "../../data/settings.data";
+import { RequestParamsService } from "../../services/request-params.service";
+import { ConsoleLoggerService } from "../../services/console-logger.service";
+import { ApiResetResponse } from "../../models/api.model";
 
 @Component({
-	selector: 'app-tweets-container',
-	templateUrl: './tweets-container.component.html',
-	styleUrls: ['./tweets-container.component.sass']
+  selector: "app-tweets-container",
+  templateUrl: "./tweets-container.component.html",
+  styleUrls: ["./tweets-container.component.sass"]
 })
 export class TweetsContainerComponent implements OnInit, OnDestroy {
-	/**
-	 * Collection of all tweets
-	 */
-	public readonly tweets$ = this.store.select(({ tweets: {list} }) => list);
+  /**
+   * Collection of all tweets
+   */
+  public readonly tweets$ = this.store.select(({ tweets: { list } }) => list);
 
-	/**
-	 * Interval for feed updating
-	 */
-	private updateTweetsInterval: Observable<number>;
+  /**
+   * Interval for feed updating
+   */
+  private updateTweetsInterval: Observable<number>;
 
-	/**
-	 * Storage for all rxjs subscriprions
-	 */
-	private subscriptions = new Array<Subscription>();
+  /**
+   * Storage for all rxjs subscriprions
+   */
+  private subscriptions = new Array<Subscription>();
 
-	constructor(
-		private readonly store: Store<AppState>,
-		private readonly http: HttpClient,
-		private readonly requestParams: RequestParamsService,
-		private readonly consoleLogger: ConsoleLoggerService,
-	) {}
+  private autoUpdate = true;
 
-	/**
-	 * Component life cycle hook
-	 */
-	public ngOnInit(): void {
-		this.updateTweets();
-		this.setUpdateTweetsInterval();
-	}
+  private readonly scrollHandler = () => this.pageScrolled();
 
-	/**
-	 * Component life cycle hook
-	 */
-	public ngOnDestroy(): void {
-		this.subscriptions.forEach(sub => sub.unsubscribe());
-	}
+  constructor(
+    private readonly store: Store<AppState>,
+    private readonly http: HttpClient,
+    private readonly requestParams: RequestParamsService,
+    private readonly consoleLogger: ConsoleLoggerService
+  ) {}
 
-	/**
-	 * Updates state with newest tweets
-	 */
-	private updateTweets(): void {
-		this.tweets$.pipe(take(1)).subscribe(currentList => {
-			const requestParams = this.requestParams.get(currentList);
+  /**
+   * Component life cycle hook
+   */
+  public ngOnInit(): void {
+    this.updateTweets();
+    this.setUpdateTweetsInterval();
+    this.subscribeWindowScroll();
+  }
 
-			this.http.get<TweetInfo[]>(API_ENDPOINT, { params: requestParams}).pipe(take(1)).subscribe(
-				payload => this.store.dispatch(new UpdateTweetsListAction(payload)),
-				(error: HttpErrorResponse) => this.consoleLogger.logRequestError(error)
-			);
+  /**
+   * Component life cycle hook
+   */
+  public ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.unSubscribeWindowScroll();
+  }
 
-			// Automatically resets tweets DB when its full
-			if (this.isFullDataBase(currentList)) {
-				this.resetTweetsDataBase();
-			}
-		});
-	}
+  private subscribeWindowScroll(): void {
+    window.addEventListener("scroll", this.scrollHandler);
+  }
 
-	/**
-	 * Sets interval for updating tweets
-	 */
-	private setUpdateTweetsInterval(): void {
-		this.updateTweetsInterval = interval(UPDATE_FEED_INTERVAL_PERIOD);
-		this.subscriptions.push(
-			this.updateTweetsInterval.subscribe(() => this.updateTweets())
-		);
-	}
+  private unSubscribeWindowScroll(): void {
+    window.removeEventListener("scroll", this.scrollHandler);
+  }
 
-	/**
-	 * Tells if tweets data base is full
-	 */
-	private isFullDataBase(list: TweetInfo[]): boolean {
-		return list.some(({ id }) => id >= MAX_TWEET_ID);
-	}
+  private pageScrolled(): void {
+    const { top, bottom } = document.body.getBoundingClientRect();
 
-	/**
-	 * Sends request that resets tweets data base
-	 */
-	private resetTweetsDataBase(): void {
-		this.http.get<ApiResetResponse>(API_RESET_ENDPOINT).pipe(take(1)).subscribe(
-			payload => this.consoleLogger.logResetRequestResponse(payload),
-			(error: HttpErrorResponse) => this.consoleLogger.logRequestError(error)
-		);
-	}
+    this.autoUpdate = top === 0;
 
+    if (document.body.clientHeight === Math.abs(top) + bottom) {
+      this.fetchTweetsHistory();
+    }
+  }
+
+  private fetchTweetsHistory() {
+    this.tweets$.pipe(take(1)).subscribe(currentList => {
+      const params = this.requestParams.getOldTweets(currentList);
+
+      this.http
+        .get<TweetInfo[]>(API_ENDPOINT, { params })
+        .pipe(take(1))
+        .subscribe(
+          payload => this.store.dispatch(new UpdateOldTweetsAction(payload)),
+          (error: HttpErrorResponse) =>
+            this.consoleLogger.logRequestError(error)
+        );
+    });
+  }
+
+  /**
+   * Updates state with newest tweets
+   */
+  private updateTweets(): void {
+    if (this.autoUpdate) {
+      this.tweets$.pipe(take(1)).subscribe(currentList => {
+        const params = this.requestParams.getNewTweets(currentList);
+
+        this.http
+          .get<TweetInfo[]>(API_ENDPOINT, { params })
+          .pipe(take(1))
+          .subscribe(
+            payload => this.store.dispatch(new UpdateTweetsListAction(payload)),
+            (error: HttpErrorResponse) =>
+              this.consoleLogger.logRequestError(error)
+          );
+
+        // Automatically resets tweets DB when its full
+        if (this.isFullDataBase(currentList)) {
+          this.resetTweetsDataBase();
+        }
+      });
+    }
+  }
+
+  /**
+   * Sets interval for updating tweets
+   */
+  private setUpdateTweetsInterval(): void {
+    this.updateTweetsInterval = interval(UPDATE_FEED_INTERVAL_PERIOD);
+    this.subscriptions.push(
+      this.updateTweetsInterval.subscribe(() => this.updateTweets())
+    );
+  }
+
+  /**
+   * Tells if tweets data base is full
+   */
+  private isFullDataBase(list: TweetInfo[]): boolean {
+    return list.some(({ id }) => id >= MAX_TWEET_ID);
+  }
+
+  /**
+   * Sends request that resets tweets data base
+   */
+  private resetTweetsDataBase(): void {
+    this.http
+      .get<ApiResetResponse>(API_RESET_ENDPOINT)
+      .pipe(take(1))
+      .subscribe(
+        payload => this.consoleLogger.logResetRequestResponse(payload),
+        (error: HttpErrorResponse) => this.consoleLogger.logRequestError(error)
+      );
+  }
 }
